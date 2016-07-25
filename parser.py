@@ -93,7 +93,9 @@ class Kyoshu(object):
 		if saved_dict == False:
 			return False
 
-		i=0
+		while (saved_dict[0]['date'] != dict[0]['date']):
+			saved_dict.pop(0)
+
 		for saved_date_dict,date_dict in zip(saved_dict,dict):
 			date=date_dict['date']
 			print('check for '+date)
