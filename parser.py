@@ -75,14 +75,21 @@ class Kyoshu(object):
 			elif '次週' in dom.text:
 				next=dom.attrib['href']
 		list=[]
-		for dom in link_doms:
-			b={}
-			b['date']=dom.text
-			b['resinfo']=str(dom.getnext().tail).strip().replace(' ','')
-			b['schedule']=self._convert_schedule_string_to_obj(b['resinfo'])
 
-			if '月' in b['date'] and '日' in b['date']:
-				list.append(b)
+		for u in [url,next]:
+			r = self.session_requests.get(self.url_base+u)
+			r.encoding='Shift_JIS'
+			dom = html.fromstring(r.text.strip())
+			link_doms=dom.xpath('//a')
+
+			for dom in link_doms:
+				b={}
+				b['date']=dom.text
+				b['resinfo']=str(dom.getnext().tail).strip().replace(' ','')
+				b['schedule']=self._convert_schedule_string_to_obj(b['resinfo'])
+
+				if '月' in b['date'] and '日' in b['date']:
+					list.append(b)
 
 		self._compare_schedule(list)
 		self._save_schedule_to_file(list)
