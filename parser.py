@@ -141,6 +141,8 @@ class Kyoshu(object):
 				desc='Test'
 			elif m=='G':
 				desc='Desk Reserved'
+			elif m=='S':
+				desc='Available[S]'
 
 			d['hour']=h
 			d['str']=m
