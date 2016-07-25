@@ -3,6 +3,8 @@
 import lxml.html
 import requests
 
+import slackweb
+
 from lxml import html
 
 import configparser
@@ -16,14 +18,16 @@ class Kyoshu(object):
 
 		self.m_user=inifile.get('identifier','user_no')
 		self.m_passwd=inifile.get('identifier','user_password')
-		#m_base_url=inifile.get('greserve','mobile_url')
 		self.url_base=inifile.get('greserve','url_base')
 		self.url_login=inifile.get('greserve','url_login')
 		self.m_base_url=inifile.get('greserve','mobile_url')
 		self.file_schedule_all=inifile.get('file','schedule_all')
 
 		self.slack_integration=inifile.get('greserve','slack_integration')
+
 		self.session_requests = requests.session()
+		self.slack = slackweb.Slack(url=self.slack_integration)
+
 		self.do_login()
 
 	def do_login(self):
@@ -68,7 +72,6 @@ class Kyoshu(object):
 				prev=dom.attrib['href']
 			elif '次週' in dom.text:
 				next=dom.attrib['href']
-
 		list=[]
 		for dom in link_doms:
 			b={}
@@ -92,6 +95,7 @@ class Kyoshu(object):
 			print('check for '+date)
 			for saved_hours,hours in zip(saved_date_dict['schedule'],date_dict['schedule']):
 				if saved_hours['description'] != hours['description']:
+					self.slack.notify(text='Date: '+date+' Hour:'+str(hours['hour'])+' state is changed from '+saved_hours['description']+' to '+hours['description'])
 
 	def _save_schedule_to_file(self,dict):
 		with open(self.file_schedule_all,'w') as f:
