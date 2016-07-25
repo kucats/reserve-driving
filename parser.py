@@ -3,6 +3,8 @@
 import lxml.html
 import requests
 
+import os.path
+
 import slackweb
 
 from lxml import html
@@ -88,6 +90,8 @@ class Kyoshu(object):
 
 	def _compare_schedule(self,dict):
 		saved_dict = self._open_schedule_from_file()
+		if saved_dict == False:
+			return False
 
 		i=0
 		for saved_date_dict,date_dict in zip(saved_dict,dict):
@@ -102,6 +106,9 @@ class Kyoshu(object):
 			json.dump(dict, f, sort_keys=True, indent=4)
 
 	def _open_schedule_from_file(self):
+		if (os.path.exists(self.file_schedule_all)==False):
+			return False
+
 		with open(self.file_schedule_all,'r') as f:
 			return json.load(f)
 
