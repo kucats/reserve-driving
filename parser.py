@@ -6,6 +6,7 @@ import requests
 from lxml import html
 
 import configparser
+import json
 
 class Kyoshu(object):
 
@@ -19,6 +20,9 @@ class Kyoshu(object):
 		self.url_base=inifile.get('greserve','url_base')
 		self.url_login=inifile.get('greserve','url_login')
 		self.m_base_url=inifile.get('greserve','mobile_url')
+		self.file_schedule_all=inifile.get('file','schedule_all')
+
+		self.slack_integration=inifile.get('greserve','slack_integration')
 		self.session_requests = requests.session()
 		self.do_login()
 
@@ -75,7 +79,27 @@ class Kyoshu(object):
 			if '月' in b['date'] and '日' in b['date']:
 				list.append(b)
 
+		self._compare_schedule(list)
+		self._save_schedule_to_file(list)
 		return list
+
+	def _compare_schedule(self,dict):
+		saved_dict = self._open_schedule_from_file()
+
+		i=0
+		for saved_date_dict,date_dict in zip(saved_dict,dict):
+			date=date_dict['date']
+			print('check for '+date)
+			for saved_hours,hours in zip(saved_date_dict['schedule'],date_dict['schedule']):
+				if saved_hours['description'] != hours['description']:
+
+	def _save_schedule_to_file(self,dict):
+		with open(self.file_schedule_all,'w') as f:
+			json.dump(dict, f, sort_keys=True, indent=4)
+
+	def _open_schedule_from_file(self):
+		with open(self.file_schedule_all,'r') as f:
+			return json.load(f)
 
 	def _convert_schedule_string_to_obj(self,string):
 		strlist=[]
