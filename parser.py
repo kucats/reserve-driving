@@ -108,8 +108,10 @@ class Kyoshu(object):
 			print('check for '+date)
 			for saved_hours,hours in zip(saved_date_dict['schedule'],date_dict['schedule']):
 				if saved_hours['description'] != hours['description']:
-					if(hours['description']=='Available'):
-						self.slack.notify(text=date+' '+str(hours['hour'])+'限の予約ができるようになりました (state changed from '+saved_hours['description']+' to '+hours['description']+')')
+					if(hours['description']=='Available' or hours['description']=='Available(S)'):
+						self.slack.notify(text='[空き]'+date+' '+str(hours['hour'])+'限の予約ができるようになりました (state changed from '+saved_hours['description']+' to '+hours['description']+')')
+					elif(hours['description']=='Unavailable'):
+						self.slack.notify(text=+date+' '+str(hours['hour'])+'限は、予約されてしまいました。 (state changed from '+saved_hours['description']+' to '+hours['description']+')')
 					else:
 						self.slack.notify(text='Date: '+date+' Hour:'+str(hours['hour'])+' state is changed from '+saved_hours['description']+' to '+hours['description'])
 
