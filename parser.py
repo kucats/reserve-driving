@@ -130,18 +130,24 @@ class Kyoshu(object):
 		for m in strlist:
 			d={}
 			if m=='X':
+				#枠はあるが、予約で一杯
 				desc='Unavailable'
 			elif m=='J':
+				#予約済み
 				desc='Reserved'
 			elif m=='O':
+				#予約可能
 				desc='Available'
 			elif m=='-':
-				desc='Offline'
+				#そもそも枠がない
+				desc='Unavailable'
 			elif m=='K':
+				#検定予約済み
 				desc='Test'
 			elif m=='G':
 				desc='Desk Reserved'
 			elif m=='S':
+				#指名予約可
 				desc='Available[S]'
 
 			d['hour']=h
