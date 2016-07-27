@@ -224,7 +224,7 @@ class Kyoshu(object):
 		font_dom_ok=dom.xpath("//font[@class='ok']")
 		font_dom_error=dom.xpath("//font[@class='error']")
 		if len(font_dom_ok) != 0 and font_dom_ok[0].text is not False:
-			self._notify('予約成功: ('+str(month)+'/'+str(day)+' '+str(hour)+'限) を予約しました')
+			self._notify('[成功]予約成功: ('+str(month)+'/'+str(day)+' '+str(hour)+'限) を予約しました')
 			if sh_name is not None:
 				self._notify('指名指導員: '+sh_name)
 		elif len(font_dom_error) != 0 and font_dom_error[0].text is not False:
@@ -317,6 +317,8 @@ class Kyoshu(object):
 						self.check_and_do_reserve(short_m,short_d,hours['hour'])
 					elif(hours['description']=='Unavailable'):
 						self._notify(date+' '+str(hours['hour'])+'限は、予約されてしまいました。 (state has changed from '+saved_hours['description']+' to '+hours['description']+')')
+					elif(hours['description']=='Reserved'):
+						self._notify(date+' '+str(hours['hour'])+'限は、あなたが予約しました。 (state has changed from '+saved_hours['description']+' to '+hours['description']+')')
 					else:
 						self._notify('Date: '+date+' Hour:'+str(hours['hour'])+' state has changed from '+saved_hours['description']+' to '+hours['description'])
 
