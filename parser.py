@@ -336,9 +336,16 @@ class Kyoshu(object):
 			dict = AutoVivification(self._open_reserve_from_file())
 
 		if len(dict[month]) >= 1:
-			dict[month].update({day: {hour: 1}})
+			#その日に既に登録があったら、保持する
+			if len(dict[month][day]) >= 1:
+				day_dict = dict[month][day]
+				day_dict.update({hour: 1})
+			else:
+			#その日に登録がなければ、新規作成
+				dict[month].update({day: {hour: 1}})
 		else:
 			dict[month][day][hour] = 1
+
 		return self._save_reserve_to_file(dict)
 
 	def del_reserve(self,month,day,hour):
@@ -352,9 +359,15 @@ class Kyoshu(object):
 			dict = AutoVivification(self._open_reserve_from_file())
 
 		if len(dict[month]) >= 1:
-			dict[month].update({day: {hour: -1}})
+			#その日に既に登録があったら、保持する
+			if len(dict[month][day]) >= 1:
+				day_dict = dict[month][day]
+				day_dict.update({hour: -1})
+			else:
+			#その日に登録がなければ、新規作成
+				dict[month].update({day: {hour: -1}})
 		else:
-			dict[month][day][hour] = -1
+			dict[month][day][hour] = 1
 		return self._save_reserve_to_file(dict)
 
 
