@@ -16,6 +16,12 @@ from datetime import datetime as dt
 import configparser
 import json
 
+from logging import getLogger
+import logging.config
+import traceback
+
+logger = getLogger(__name__)
+logging.basicConfig(filename='/tmp/drv_parser.log',level=logging.DEBUG)
 
 class AutoVivification(dict):
     """Implementation of perl's autovivification feature. Has features from both dicts and lists,
@@ -425,5 +431,10 @@ def main():
 	#Kyoshu.do_reserve('8','1','2')
 
 if __name__ == '__main__':
-	Kyoshu = Kyoshu()
-	main()
+	logger.info('start')
+	try:
+		Kyoshu = Kyoshu()
+		main()
+	except:
+		logger.error(traceback.format_exc())
+	logger.info('End')
