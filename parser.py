@@ -319,7 +319,7 @@ class Kyoshu(object):
 						self._notify('Date: '+date+' Hour:'+str(hours['hour'])+' state has changed from '+saved_hours['description']+' to '+hours['description'])
 
 	def check_and_do_reserve(self,month,day,hour):
-		if self.check_reserve(month,day,hour) == True:
+		if self.check_reserve(str(month),str(day),str(hour)) == True:
 			self._notify('予約対象として登録されているので、予約を試行します')
 			return self.do_reserve(month,day,hour)
 		else:
