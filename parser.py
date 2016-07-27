@@ -166,13 +166,13 @@ class Kyoshu(object):
 		#next week
 		for dom in link_doms:
 			if '前週' in dom.text:
-				prev=dom.attrib['href']
+				prev=self.url_base+dom.attrib['href']
 			elif '次週' in dom.text:
-				next=dom.attrib['href']
+				next=self.url_base+dom.attrib['href']
 		list=[]
 
 		for u in [url,next]:
-			r = self.session_requests.get(self.url_base+u)
+			r = self.session_requests.get(u)
 			r.encoding='Shift_JIS'
 			dom = html.fromstring(r.text.strip())
 			link_doms=dom.xpath('//a')
