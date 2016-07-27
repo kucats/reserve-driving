@@ -11,8 +11,68 @@ from lxml import html
 
 from urllib.parse import urlparse, parse_qs
 
+from datetime import datetime as dt
+
 import configparser
 import json
+
+
+class AutoVivification(dict):
+    """Implementation of perl's autovivification feature. Has features from both dicts and lists,
+    dynamically generates new subitems as needed, and allows for working (somewhat) as a basic type.
+    """
+    def __getitem__(self, item):
+        if isinstance(item, slice):
+            d = AutoVivification()
+            items = sorted(self.iteritems(), reverse=True)
+            k,v = items.pop(0)
+            while 1:
+                if (item.start < k < item.stop):
+                    d[k] = v
+                elif k > item.stop:
+                    break
+                if item.step:
+                    for x in range(item.step):
+                        k,v = items.pop(0)
+                else:
+                    k,v = items.pop(0)
+            return d
+        try:
+            return dict.__getitem__(self, item)
+        except KeyError:
+            value = self[item] = type(self)()
+            return value
+
+    def __add__(self, other):
+        """If attempting addition, use our length as the 'value'."""
+        return len(self) + other
+
+    def __radd__(self, other):
+        """If the other type does not support addition with us, this addition method will be tried."""
+        return len(self) + other
+
+    def append(self, item):
+        """Add the item to the dict, giving it a higher integer key than any currently in use."""
+        largestKey = sorted(self.keys())[-1]
+        if isinstance(largestKey, str):
+            self.__setitem__(0, item)
+        elif isinstance(largestKey, int):
+            self.__setitem__(largestKey+1, item)
+
+    def count(self, item):
+        """Count the number of keys with the specified item."""
+        return sum([1 for x in self.items() if x == item])
+
+    def __eq__(self, other):
+        """od.__eq__(y) <==> od==y. Comparison to another AV is order-sensitive
+        while comparison to a regular mapping is order-insensitive. """
+        if isinstance(other, AutoVivification):
+            return len(self)==len(other) and self.items() == other.items()
+        return dict.__eq__(self, other)
+
+    def __ne__(self, other):
+        """od.__ne__(y) <==> od!=y"""
+        return not self == other
 
 class Kyoshu(object):
 
@@ -25,16 +85,22 @@ class Kyoshu(object):
 		self.url_base=inifile.get('greserve','url_base')
 		self.url_login=inifile.get('greserve','url_login')
 		self.m_base_url=inifile.get('greserve','mobile_url')
+
 		self.file_schedule_all=inifile.get('file','schedule_all')
+		self.file_reserve=inifile.get('file','reserve')
 
 		self.slack_integration=inifile.get('greserve','slack_integration')
 
 		self.session_requests = requests.session()
 		self.slack = slackweb.Slack(url=self.slack_integration)
+		self.logged_in=False
 
-		self.do_login()
+	def __call__(self):
+		self.__init__()
 
 	def do_login(self):
+		if self.logged_in==True:
+			return True
 		r = self.session_requests.get(self.m_base_url)
 		payload = {
 			"b.schoolCd" : "xaFIWet1fi0+brGQYS+1OA==",
@@ -58,11 +124,14 @@ class Kyoshu(object):
 			b['url']=dom.attrib['href']
 			operations.append(b)
 		self.operations=operations
+		self.logged_in=True
+		return True
 
 	def _notify(self,text):
 		self.slack.notify(text=text)
 
 	def _filter_operations_by_name(self,name):
+		self.do_login()
 		operations=self.operations
 		for ops in operations:
 			if ops['action_ja'] == '技能予約':
@@ -82,6 +151,8 @@ class Kyoshu(object):
 
 	def do_reserve(self,month,day,hour):
 		#特定の時限の予約を行う
+		url=None
+
 		g = self.get_reserve_page(month,day)
 		for each in g:
 			each_hour = each.get('hour',{})
@@ -89,7 +160,9 @@ class Kyoshu(object):
 			if hour==each_hour:
 				url=each_url
 				break
-		if url is False:
+
+		if url is None:
+			self._notify('予約不能: ('+month+'/'+day+' '+hour+'限) は予約できる状態ではありません。')
 			return False
 
 		r = self.session_requests.get(url)
@@ -223,14 +296,79 @@ class Kyoshu(object):
 		for saved_date_dict,date_dict in zip(saved_dict,dict):
 			date=date_dict['date']
 			print('check for '+date)
+
+			d = dt.today()
+			tdatetime = dt.strptime(str(d.year)+'年'+date[0:6], '%Y年%m月%d日')
+			short_m=tdatetime.strftime('%m')
+			short_d=tdatetime.strftime('%d')
+
 			for saved_hours,hours in zip(saved_date_dict['schedule'],date_dict['schedule']):
 				if saved_hours['description'] != hours['description']:
 					if(hours['description']=='Available' or hours['description']=='Available[S]'):
 						self._notify('[空き]'+date+' '+str(hours['hour'])+'限の予約ができるようになりました (state has changed from '+saved_hours['description']+' to '+hours['description']+')')
+						self.check_and_do_reserve(short_m,short_d,hours['hour'])
 					elif(hours['description']=='Unavailable'):
 						self._notify(date+' '+str(hours['hour'])+'限は、予約されてしまいました。 (state has changed from '+saved_hours['description']+' to '+hours['description']+')')
 					else:
 						self._notify('Date: '+date+' Hour:'+str(hours['hour'])+' state has changed from '+saved_hours['description']+' to '+hours['description'])
+
+	def check_and_do_reserve(self,month,day,hour):
+		if self.check_reserve(month,day,hour) == True:
+			self._notify('予約対象として登録されているので、予約を試行します')
+			return self.do_reserve(month,day,hour)
+		else:
+			return False
+
+	def add_new_reserve(self,month,day,hour):
+		dict=self._open_reserve_from_file()
+		if dict is False:
+			#新規作成
+			dict = AutoVivification()
+		else:
+			dict = AutoVivification(self._open_reserve_from_file())
+
+		if dict.get( month ,{}) is False:
+			dict[month] = {}
+			if dict.get( day ,{}) is False:
+				dict[month][day] = {}
+
+		dict[month][day][hour] = 1
+		return self._save_reserve_to_file(dict)
+
+	def del_reserve(self,month,day,hour):
+		dict=self._open_reserve_from_file()
+		if dict is False:
+			#新規作成
+			dict = AutoVivification()
+		else:
+			dict = AutoVivification(self._open_reserve_from_file())
+
+		dict[month][day][hour] = -1
+		return _save_reserve_to_file(dict)
+
+
+	def check_reserve(self,month,day,hour):
+		dict=self._open_reserve_from_file()
+		if dict is False:
+			return False
+		else:
+			dict = AutoVivification(self._open_reserve_from_file())
+
+		if dict[month][day][hour] == 1:
+			return True
+		else:
+			return False
+
+	def _open_reserve_from_file(self):
+		if (os.path.exists(self.file_reserve)==False):
+			return False
+
+		with open(self.file_reserve,'r') as f:
+			return json.load(f)
+
+	def _save_reserve_to_file(self,dict):
+		with open(self.file_reserve,'w') as f:
+			json.dump(dict, f, sort_keys=True, indent=4)
 
 	def _save_schedule_to_file(self,dict):
 		with open(self.file_schedule_all,'w') as f:
@@ -281,11 +419,11 @@ class Kyoshu(object):
 		return schedule_list
 
 
-Kyoshu = Kyoshu()
 
 def main():
 	Kyoshu.get_page_reservation()
-	#Kyoshu.do_reserve('7','29','9')
+	#Kyoshu.do_reserve('8','1','2')
 
 if __name__ == '__main__':
+	Kyoshu = Kyoshu()
 	main()
