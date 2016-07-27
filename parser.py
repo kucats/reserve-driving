@@ -157,7 +157,9 @@ class Kyoshu(object):
 
 	def do_reserve(self,month,day,hour):
 		#特定の時限の予約を行う
-		url=None
+		url = None
+		#指導員の名前(予約時指定のときのみ入る)
+		sh_name = None
 
 		g = self.get_reserve_page(month,day)
 		for each in g:
