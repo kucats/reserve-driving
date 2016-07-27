@@ -342,6 +342,8 @@ class Kyoshu(object):
 		return self._save_reserve_to_file(dict)
 
 	def del_reserve(self,month,day,hour):
+		month=month.zfill(2)
+		day=day.zfill(2)
 		dict=self._open_reserve_from_file()
 		if dict is False:
 			#新規作成
@@ -349,8 +351,11 @@ class Kyoshu(object):
 		else:
 			dict = AutoVivification(self._open_reserve_from_file())
 
-		dict[month][day][hour] = -1
-		return _save_reserve_to_file(dict)
+		if len(dict[month]) == 1:
+			dict[month].update({day: {hour: -1}})
+		else:
+			dict[month][day][hour] = -1
+		return self._save_reserve_to_file(dict)
 
 
 	def check_reserve(self,month,day,hour):
