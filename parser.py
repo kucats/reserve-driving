@@ -170,7 +170,7 @@ class Kyoshu(object):
 				break
 
 		if url is None:
-			self._notify('予約不能: ('+month+'/'+day+' '+hour+'限) は予約できる状態ではありません。')
+			self._notify('予約不能: ('+str(month)+'/'+str(day)+' '+str(hour)+'限) は予約できる状態ではありません。')
 			return False
 
 		r = self.session_requests.get(url)
