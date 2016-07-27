@@ -370,8 +370,9 @@ class Kyoshu(object):
 			dict[month][day][hour] = 1
 		return self._save_reserve_to_file(dict)
 
-
 	def check_reserve(self,month,day,hour):
+		month=month.zfill(2)
+		day=day.zfill(2)
 		dict=self._open_reserve_from_file()
 		if dict is False:
 			return False
