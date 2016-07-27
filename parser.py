@@ -165,7 +165,7 @@ class Kyoshu(object):
 		for each in g:
 			each_hour = each.get('hour',{})
 			each_url = each.get('url',{})
-			if hour==each_hour:
+			if str(hour)==str(each_hour):
 				url=each_url
 				break
 
