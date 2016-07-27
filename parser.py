@@ -157,7 +157,8 @@ class Kyoshu(object):
 
 
 	def get_page_reservation(self):
-		r = self.session_requests.get(self._filter_operations_by_name('技能予約'))
+		url=self._filter_operations_by_name('技能予約')
+		r = self.session_requests.get(url)
 		r.encoding='Shift_JIS'
 		dom = html.fromstring(r.text.strip())
 		link_doms=dom.xpath('//a')
