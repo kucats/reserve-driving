@@ -95,9 +95,29 @@ class Kyoshu(object):
 		r = self.session_requests.get(url)
 		r.encoding='Shift_JIS'
 
-		#指名があれば
+		#指名できるかどうかチェック
+		dom = html.fromstring(r.text.strip())
+		font_title=dom.xpath("//font[@class='headerTitle']")
+		#指名できそう
+		if len(font_title)!=0 and font_title[0].text=='指名変更':
+			link_doms = dom.xpath('//a')
+			list=[]
+			for dom in link_doms:
+				b={}
+				#指名チェック
+				if 'm03j' in dom.attrib['href'] and 'selectInstructorCd=-1' not in dom.attrib['href']:
 
-		#指名がなければ
+					b['name']=dom.text
+					b['url']=self.url_base+dom.attrib['href']
+					list.append(b)
+
+			#1人目の人を指名する
+			r = self.session_requests.get(list[0]['url'])
+			sh_name = list[0]['name']
+			r.encoding='Shift_JIS'
+
+
+		#指名がなければ / or 指名後のページ
 		dom = html.fromstring(r.text.strip())
 		form_dom=dom.xpath('//form')[0]
 
@@ -124,6 +144,8 @@ class Kyoshu(object):
 		font_dom_error=dom.xpath("//font[@class='error']")
 		if len(font_dom_ok) != 0 and font_dom_ok[0].text is not False:
 			self._notify('予約成功: ('+month+'/'+day+' '+hour+'限) を予約しました')
+			if sh_name is not None:
+				self._notify('指名指導員: '+sh_name)
 		elif len(font_dom_error) != 0 and font_dom_error[0].text is not False:
 			self._notify('予約エラー: ('+month+'/'+day+' '+hour+'限) '+font_dom_error[0].text)
 		else:
