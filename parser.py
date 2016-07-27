@@ -377,12 +377,15 @@ class Kyoshu(object):
 			return False
 		else:
 			dict = AutoVivification(self._open_reserve_from_file())
-
-		if len(dict[month]) >= 1:
-			if len(dict[month][day]) >= 1:
-				if hour in dict[month][day]:
-					return True
-		return False
+		try:
+			#一度エラー処理で逃げる
+			if len(dict[month]) >= 1:
+				if len(dict[month][day]) >= 1:
+					if hour in dict[month][day]:
+						return True
+			return False
+		except:
+			return False
 
 	def _open_reserve_from_file(self):
 		if (os.path.exists(self.file_reserve)==False):
