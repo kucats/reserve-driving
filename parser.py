@@ -351,7 +351,7 @@ class Kyoshu(object):
 		else:
 			dict = AutoVivification(self._open_reserve_from_file())
 
-		if len(dict[month]) == 1:
+		if len(dict[month]) >= 1:
 			dict[month].update({day: {hour: -1}})
 		else:
 			dict[month][day][hour] = -1
