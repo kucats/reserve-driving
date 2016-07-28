@@ -225,9 +225,9 @@ class Kyoshu(object):
 		font_dom_error=dom.xpath("//font[@class='error']")
 		if len(font_dom_ok) != 0 and font_dom_ok[0].text is not False:
 			if sh_name is not None:
-                self._notify('[成功]予約成功: ('+str(month)+'/'+str(day)+' '+str(hour)+'限) を予約しました(指名あり:'+sh_name+')')
-            else:
-                self._notify('[成功]予約成功: ('+str(month)+'/'+str(day)+' '+str(hour)+'限) を予約しました')
+				self._notify('[成功]予約成功: ('+str(month)+'/'+str(day)+' '+str(hour)+'限) を予約しました(指名あり:'+sh_name+')')
+			else:
+				self._notify('[成功]予約成功: ('+str(month)+'/'+str(day)+' '+str(hour)+'限) を予約しました')
 		elif len(font_dom_error) != 0 and font_dom_error[0].text is not False:
 			self._notify('予約エラー: ('+str(month)+'/'+str(day)+' '+str(hour)+'限) '+font_dom_error[0].text)
 		else:
