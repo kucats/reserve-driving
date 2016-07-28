@@ -338,15 +338,16 @@ class Kyoshu(object):
 			dict = AutoVivification()
 		else:
 			dict = AutoVivification(self._open_reserve_from_file())
-
-		if len(dict[month]) >= 1:
+		if dict.get(month,None) is not None:
 			#その日に既に登録があったら、保持する
-			if len(dict[month][day]) >= 1:
+			if dict[month].get(day,None) is not None:
 				day_dict = dict[month][day]
 				day_dict.update({hour: 1})
+				dict[month][day]=day_dict
 			else:
-			#その日に登録がなければ、新規作成
-				dict[month].update({day: {hour: 1}})
+				#その日に登録がなければ、新規作成
+				dict[month][day]={}
+				dict[month][day][hour]=1
 		else:
 			dict[month][day][hour] = 1
 
@@ -362,11 +363,12 @@ class Kyoshu(object):
 		else:
 			dict = AutoVivification(self._open_reserve_from_file())
 
-		if len(dict[month]) >= 1:
+		if dict.get(month,None) is not None:
 			#その日に既に登録があったら、保持する
-			if len(dict[month][day]) >= 1:
+			if dict[month].get(day,None) is not None:
 				day_dict = dict[month][day]
 				day_dict.update({hour: -1})
+				dict[month][day]=day_dict
 			else:
 			#その日に登録がなければ、新規作成
 				dict[month].update({day: {hour: -1}})
